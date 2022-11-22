@@ -1,0 +1,2 @@
+# gorabbitmq
+Library for rabbitmq
