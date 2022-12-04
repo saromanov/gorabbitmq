@@ -2,6 +2,7 @@ package connection
 
 import (
 	"context"
+	"fmt"
 	"sync"
 	"time"
 
@@ -19,11 +20,26 @@ type Connection struct {
 	cancelFunc       context.CancelFunc
 	connError        error
 	connErrorM       sync.Mutex
+	subscribersM     sync.RWMutex
+	subscribers      map[string]subscriber
 }
 
 // Run provides running of connection
 func (c *Connection) Run(ctx context.Context) error {
 	return c.maintainConnection(ctx)
+}
+
+func (c *Connection) AddSubscribtion(ctx context.Context, queueName string) error {
+	return c.addSubscription(ctx, queueName)
+}
+
+func (c *Connection) addSubscription(ctx context.Context, queueName string) error {
+	c.subscribersM.Lock()
+	defer c.subscribersM.Unlock()
+	if _, exists := c.subscribers[queueName]; exists {
+		return fmt.Errorf("subscriber already exists")
+	}
+	return nil
 }
 
 // maintainConnection supports maintaining of connection
@@ -37,7 +53,7 @@ func (c *Connection) maintainConnection(ctx context.Context) error {
 		}
 
 		select {
-		case <- ctx.Done():
+		case <-ctx.Done():
 			return ctx.Err()
 		}
 
@@ -46,17 +62,17 @@ func (c *Connection) maintainConnection(ctx context.Context) error {
 
 // private method for open connection
 func (c *Connection) open(ctx context.Context) error {
-	conn, err := amqp.Dial(r.address)
+	conn, err := amqp.Dial(c.address)
 	if err != nil {
 		return err
 	}
 
-	r.conn = conn
+	c.conn = conn
 	ch, err := conn.Channel()
 	if err != nil {
 		return err
 	}
-	ctx, r.cancelFunc = context.WithCancel(ctx)
+	ctx, c.cancelFunc = context.WithCancel(ctx)
 	errorChan := make(chan *amqp.Error)
 	ch.NotifyClose(errorChan)
 	return nil
