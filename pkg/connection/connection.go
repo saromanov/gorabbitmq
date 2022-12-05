@@ -28,7 +28,7 @@ type Connection struct {
 func (c *Connection) Run(ctx context.Context) error {
 	return c.maintainConnection(ctx)
 }
-
+// AddSubscription provides adding of the new subscription
 func (c *Connection) AddSubscribtion(ctx context.Context, queueName string) error {
 	return c.addSubscription(ctx, queueName)
 }
