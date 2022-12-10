@@ -22,6 +22,8 @@ type Connection struct {
 	connErrorM       sync.Mutex
 	subscribersM     sync.RWMutex
 	subscribers      map[string]subscriber
+	lastErr          error
+	lastErrM         sync.Mutex
 }
 
 // Run provides running of connection
@@ -29,16 +31,24 @@ func (c *Connection) Run(ctx context.Context) error {
 	return c.maintainConnection(ctx)
 }
 // AddSubscription provides adding of the new subscription
-func (c *Connection) AddSubscribtion(ctx context.Context, queueName string) error {
-	return c.addSubscription(ctx, queueName)
+func (c *Connection) AddSubscribtion(ctx context.Context, queueName string, s subscription) error {
+	err := c.addSubscription(ctx, queueName, s)
+	c.lastErrM.Lock()
+	c.lastErr = err
+	c.lastErrM.Unlock()
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
-func (c *Connection) addSubscription(ctx context.Context, queueName string) error {
+func (c *Connection) addSubscription(ctx context.Context, queueName string, s subscription) error {
 	c.subscribersM.Lock()
 	defer c.subscribersM.Unlock()
 	if _, exists := c.subscribers[queueName]; exists {
 		return fmt.Errorf("subscriber already exists")
 	}
+	c.subscribers[queueName] = s
 	return nil
 }
 
