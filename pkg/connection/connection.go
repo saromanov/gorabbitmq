@@ -31,7 +31,7 @@ func (c *Connection) Run(ctx context.Context) error {
 	return c.maintainConnection(ctx)
 }
 // AddSubscription provides adding of the new subscription
-func (c *Connection) AddSubscribtion(ctx context.Context, queueName string, s subscription) error {
+func (c *Connection) AddSubscribtion(ctx context.Context, queueName string, s subscriber) error {
 	err := c.addSubscription(ctx, queueName, s)
 	c.lastErrM.Lock()
 	c.lastErr = err
@@ -42,7 +42,7 @@ func (c *Connection) AddSubscribtion(ctx context.Context, queueName string, s su
 	return nil
 }
 
-func (c *Connection) addSubscription(ctx context.Context, queueName string, s subscription) error {
+func (c *Connection) addSubscription(ctx context.Context, queueName string, s subscriber) error {
 	c.subscribersM.Lock()
 	defer c.subscribersM.Unlock()
 	if _, exists := c.subscribers[queueName]; exists {
