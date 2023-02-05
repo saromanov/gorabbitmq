@@ -15,6 +15,7 @@ type RabbitMQ struct {
 	reconnectTimeout time.Duration
 	conn             *amqp.Connection
 	cancelFunc       context.CancelFunc
+	channel          *amqp.Channel
 }
 
 type Config struct {
@@ -52,7 +53,17 @@ func (r *RabbitMQ) open(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+	r.channel = ch
 	ctx, r.cancelFunc = context.WithCancel(ctx)
 
+	return nil
+}
+
+// Close provides closing of the channel 
+func (r *RabbitMQ) Close(ctx context.Context) error {
+	return r.close(ctx)
+}
+
+func ( r*RabbitMQ) close(ctx context.Context) error {
 	return nil
 }
